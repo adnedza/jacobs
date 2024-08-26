@@ -1,256 +1,132 @@
 ---
 
 - name: Create instance in GCP
-
   hosts: localhost
-
   gather_facts: false
-
   vars:
-
-    service_account_file: "<path to service account file>"
-
-    project: "project-name"
-
-    network_name: "network"
-
-    subnet_name: "subnet"
-
-    ip_name: "ip"
-
-    root_disk_name: "root-disk"
-
+    service_account_file: <path to service account file>
+    project: project-name
+    network_name: network
+    subnet_name: subnet
+    ip_name: ip
+    root_disk_name: root-disk
     root_disk_size: 200
-
-    data_disk_name: "data-disk"
-
+    data_disk_name: data-disk
     data_disk_size: 500
-
-    data_disk_type: "pd-ssd"
-
-    export_disk_name: "export-disk"
-
+    data_disk_type: pd-ssd
+    export_disk_name: export-disk
     export_disk_size: 300
-
-    export_disk_type: "pd-balanced"
-
-    machine_name: "ubuntu"
-
-    region: "europe-west1"
-
-    zone: "europe-west1-a"
-
-    source_image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
-
-    subnet_cidr: "10.0.1.0/24"
-
-    machine_type: "n2-standard-2"
-
+    export_disk_type: pd-balanced
+    machine_name: ubuntu
+    region: europe-west1
+    zone: europe-west1-a
+    source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts
+    subnet_cidr: 10.0.1.0/24
+    machine_type: n2-standard-2
 
   tasks:
-
     - name: Create root disk
-
       google.cloud.gcp_compute_disk:
-
-        name: "{{ root_disk_name }}"
-
-        size_gb: "{{ root_disk_size }}"
-
-        source_image: "{{ source_image }}"
-
-        zone: "{{ zone }}"
-
-        project: "{{ project }}"
-
+        name: '{{ root_disk_name }}'
+        size_gb: '{{ root_disk_size }}'
+        source_image: '{{ source_image }}'
+        zone: '{{ zone }}'
+        project: '{{ project }}'
         auth_kind: serviceaccount
-
-        service_account_file: "{{ service_account_file }}"
-
+        service_account_file: '{{ service_account_file }}'
         state: present
-
       register: root_disk
 
-
     - name: Create data disk
-
       google.cloud.gcp_compute_disk:
-
-        name: "{{ data_disk_name }}"
-
-        size_gb: "{{ data_disk_size }}"
-
-        zone: "{{ zone }}"
-
-        project: "{{ project }}"
-
+        name: '{{ data_disk_name }}'
+        size_gb: '{{ data_disk_size }}'
+        zone: '{{ zone }}'
+        project: '{{ project }}'
         auth_kind: serviceaccount
-
-        service_account_file: "{{ service_account_file }}"
-
+        service_account_file: '{{ service_account_file }}'
         state: present
-
-        type: "{{ data_disk_type }}"
-
+        type: '{{ data_disk_type }}'
       register: data_disk
 
-
     - name: Create export disk
-
       google.cloud.gcp_compute_disk:
-
-        name: "{{ export_disk_name }}"
-
-        size_gb: "{{ export_disk_size }}"
-
-        zone: "{{ zone }}"
-
-        project: "{{ project }}"
-
+        name: '{{ export_disk_name }}'
+        size_gb: '{{ export_disk_size }}'
+        zone: '{{ zone }}'
+        project: '{{ project }}'
         auth_kind: serviceaccount
-
-        service_account_file: "{{ service_account_file }}"
-
+        service_account_file: '{{ service_account_file }}'
         state: present
-
-        type: "{{ export_disk_type }}"
-
+        type: '{{ export_disk_type }}'
       register: export_disk
 
-    
-
     - name: Create a Network in GCP
-
       google.cloud.gcp_compute_network:
-
         auth_kind: serviceaccount
-
-        project: "{{ project }}"
-
-        service_account_file: "{{ service_account_file }}"
-
-        name: "{{ network_name }}"
-
+        project: '{{ project }}'
+        service_account_file: '{{ service_account_file }}'
+        name: '{{ network_name }}'
         auto_create_subnetworks: false
-
         state: present
-
       register: network
 
-
-
     - name: Create a Subnet in the Network
-
       google.cloud.gcp_compute_subnetwork:
-
         auth_kind: serviceaccount
-
-        project: "{{ project }}"
-
-        service_account_file: "{{ service_account_file }}"
-
-        name: "{{ subnet_name }}"
-
-        region: "{{ region }}"
-
-        ip_cidr_range: "{{ subnet_cidr }}"
-
-        network: "{{ network }}"
-
+        project: '{{ project }}'
+        service_account_file: '{{ service_account_file }}'
+        name: '{{ subnet_name }}'
+        region: '{{ region }}'
+        ip_cidr_range: '{{ subnet_cidr }}'
+        network: '{{ network }}'
         state: present
-
       register: subnet
 
-
-
     - name: Reserve a static IP Address
-
       google.cloud.gcp_compute_address:
-
         auth_kind: serviceaccount
-
-        project: "{{ project }}"
-
-        service_account_file: "{{ service_account_file }}"
-
-        name: "{{ ip_name }}"
-
-        region: "{{ region }}"
-
+        project: '{{ project }}'
+        service_account_file: '{{ service_account_file }}'
+        name: '{{ ip_name }}'
+        region: '{{ region }}'
         state: present
-
       register: address
 
-        
-
-    - name: Create an Instance 
-
+    - name: Create an Instance
       google.cloud.gcp_compute_instance:
-
         auth_kind: serviceaccount
-
-        project: "{{ project }}"
-
-        service_account_file: "{{ service_account_file }}"
-
+        project: '{{ project }}'
+        service_account_file: '{{ service_account_file }}'
         state: present
-
-        name: "{{ machine_name }}"
-
-        machine_type: "{{ machine_type }}"
-
-        zone: "{{ zone }}"
-
+        name: '{{ machine_name }}'
+        machine_type: '{{ machine_type }}'
+        zone: '{{ zone }}'
         disks:
-
           - auto_delete: true
-
             boot: true
-
-            source: "{{ root_disk }}"
-
+            source: '{{ root_disk }}'
           - auto_delete: false
-
             boot: false
-
-            source: "{{ data_disk }}"
-
+            source: '{{ data_disk }}'
           - auto_delete: false
-            
             boot: false
-            
-            source: "{{ export_disk }}"
-
+            source: '{{ export_disk }}'
         network_interfaces:
-
-          - network: "{{ network }}"
-
-            subnetwork: "{{ subnet }}"
-
+          - network: '{{ network }}'
+            subnetwork: '{{ subnet }}'
             access_configs:
-
               - name: External NAT
-
                 type: ONE_TO_ONE_NAT
-
-                nat_ip: "{{ address }}"
-        
+                nat_ip: '{{ address }}'
         tags:
-
           items:
-            
-            - "tag1"
-            
-            - "tag2"
-            
-            - "tag3"
-        
+            - tag1
+            - tag2
+            - tag3
         labels:
-
-          environment: "dev"
-
-          key: "value"
-
+          environment: dev
+          key: value
         metadata:
           startup-script: |
             sudo mkdir -p /mnt/disks/{{ data_disk_name }} /mnt/disks/{{ export_disk_name }}
@@ -267,4 +143,3 @@
             ZONE=$(gcloud compute instances list --project=$PROJECT_ID --filter=name:$HOSTNAME --format="value(zone)")
             MACHINE_TYPE=ZONE=$(gcloud compute instances list --project=$PROJECT_ID --filter=name:$HOSTNAME --format="value(machine_type)")
             echo "PROJECT_ID: $PROJECT_ID, ZONE: $ZONE, MACHINE_TYPE: $MACHINE_TYPE" > /mnt/disks/{{ data_disk_name }}/vm_data.txt
-
